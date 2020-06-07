@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<!-- templates/results.html -->
+<html>
+	<head>
+	<title>PatchChecker Results</title>
+	<meta charset="UTF-8">
+<style>
+html, body{
+	margin-left: 18px;
+	margin-top: 18px;
+	padding:10;
+}
+.v {
+	   background-color: red;
+	   padding-right: 1px;
+	   padding-left: 1px;
+}
+</style>
+	</head>
+	<body>
+		{% autoescape false %} {{ message | replace('\n', '<br>') }} {% endautoescape %}
+	</body>
+</html>
+
