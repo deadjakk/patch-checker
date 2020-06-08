@@ -43,10 +43,8 @@ class PrivChecker:
     def evaluate(self, data, build_data, iscurl=False):
         build = None
         print("-"*25)
-        print("Build: {}".format(build))
         print("KBs received: {}".format(data))
         print("Count: {}".format(len(data)))
-        print("-"*25)
 
         for sbuild in supported_builds:
             if build_data == sbuild:
@@ -55,6 +53,8 @@ class PrivChecker:
         if not build:
             return "Incorrect Build."
         print("Build: {}".format(build))
+        print("-"*25)
+
         vuln_found = []
         cve_query = " DISTINCT cve from vulns where build = '{}'".format(str(build))
         cq_res = None
