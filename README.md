@@ -28,7 +28,7 @@ Additional information can be found [here](https://deadjakk.github.io/URLHERE).
 
 Alternatively, you can use a curl command and do something like this:
 Request:   
-* note: you can use any delimiter you wish, i'm using spaces here: *  
+note: you can use any delimiter you wish, i'm using spaces here:
 ```
 curl 'https://patchchecker.com/checkprivs/' --data-raw 'wmicinfo=KB1231411 KB1231441 KB1234141&build_num=17763'
 ```
