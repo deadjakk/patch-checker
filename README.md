@@ -1,5 +1,4 @@
 # PatchChecker
----
 This is the code base for the service that runs on the following site: https://patchchecker.com.
 In short, PatchChecker is a web application (running on flask) that provides output similar to that of [Watson](https://github.com/rasta-mouse/Watson/). However by using PatchChecker, one is not required to execute a binary on the target machine.
 Included in this project is also a web scraper that will automatically update the database for PatchChecker using information present on Microsoft sites, this allows for a more scalable and easier to use solution to the problem of finding CVEs to which a Windows system is (or is not) patched against. 
@@ -9,7 +8,6 @@ Further information about this project can be found [here](http://shell.rip/URLH
 
 
 ## Using PatchChecker to check vulnerabilities:
----
 To use the patchchecker, you can either go to the publicly hosted website [here at patchchecker.com](https://patchchecker.com) or you can git clone this repo, install the required libraries, makes sure patches.db is in the same directory as app.py and then start the application with `python3 ./app.py`. 
 Once the application is started you can open the included "index.html" file in a browser to actually use the service and get the list of patches to which the system being tested is vulnerable.   
 Additional information can be found [here](https://deadjakk.github.io/URLHERE).
@@ -28,7 +26,7 @@ Additional information can be found [here](https://deadjakk.github.io/URLHERE).
 
 Alternatively, you can use a curl command and do something like this:
 Request:   
-* note: you can use any delimiter you wish, i'm using spaces here: *  
+note: you can use any delimiter you wish, i'm using spaces here:
 ```
 curl 'https://patchchecker.com/checkprivs/' --data-raw 'wmicinfo=KB1231411 KB1231441 KB1234141&build_num=17763'
 ```
@@ -60,7 +58,6 @@ Response:
 ```
 
 ## Data Collection: patchdata_collector.py
----
 The `patchdata_collector.py` script is the pyppeteer scraper that iterates through several Microsoft sites to get the desired data for the cves specified in the `--cve-list` arg file.
 For an example of the expected format see the `cves.txt` file within the `samples` directory. Basically it's a line-separated file with each line containing the following `CVE-XXXX-XXXX|https://website.com/resource-pertaining-to-CVE,http://second_resource.com`
 you get the idea. An example of the resulting output can be found in the patches.db file included.  
@@ -84,7 +81,6 @@ optional arguments:
 ```
 
 ### Example run:
-
 Running `time ./patchdata_collector.py --cve-list cves.txt  --db antest.db --new-db` yields the following output:
 ```
 2020-06-05 20:38:49.292 | INFO     | __main__:main:181 - Loaded 10 CVEs
