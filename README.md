@@ -8,11 +8,23 @@ Additionally, any other CVEs can be added to the data collector input and checke
 Further information about this project can be found [here](http://shell.rip/URLHERE) or [here (github.io mirror)](https://deadjakk.github.io/URLHERE).
 
 
-### Using PatchChecker to get vulnerabilities:
+## Using PatchChecker to check vulnerabilities:
 ---
 To use the patchchecker, you can either go to the publicly hosted website [here at patchchecker.com](https://patchchecker.com) or you can git clone this repo, install the required libraries, makes sure patches.db is in the same directory as app.py and then start the application with `python3 ./app.py`. 
 Once the application is started you can open the included "index.html" file in a browser to actually use the service and get the list of patches to which the system being tested is vulnerable.   
 Additional information can be found [here](https://deadjakk.github.io/URLHERE).
+
+### Getting KB data:
+![getting-info](images/getting_info.png)
+
+### Expected input:
+![pc-input](images/expected_input.png)
+
+### Expected output from webpage:
+![pc-output](images/expected_output.png)
+
+### Expected output from webpage when vulnerabilities are found:
+![pc-output](images/expected_vulnerable.png)
 
 Alternatively, you can use a curl command and do something like this:
 Request:   
@@ -47,7 +59,7 @@ Response:
 
 ```
 
-### Data Collection: patchdata_collector.py
+## Data Collection: patchdata_collector.py
 ---
 The `patchdata_collector.py` script is the pyppeteer scraper that iterates through several Microsoft sites to get the desired data for the cves specified in the `--cve-list` arg file.
 For an example of the expected format see the `cves.txt` file within the `samples` directory. Basically it's a line-separated file with each line containing the following `CVE-XXXX-XXXX|https://website.com/resource-pertaining-to-CVE,http://second_resource.com`

@@ -18,7 +18,7 @@ def check_privs():
     else:
         ua = False
 
-    KBs = re.findall(RE_P,request.form['wmicinfo'])
+    KBs = re.findall(RE_P,request.form['wmicinfo'].upper())
     print("KBs:",KBs)
     result = pcheck.evaluate(KBs,request.form['build_num'],iscurl=ua)
     if ua:
