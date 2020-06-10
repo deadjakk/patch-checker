@@ -40,18 +40,18 @@ def init_table(dbname,logger):
     queries = [
             "create table date(\
                 last_updated varchar(120)\
-             )",                            # just making sure it's working,.. change to ignore
+             )",                          
             "create table vulns(\
                 build varchar(32),\
                 cve varchar(24),\
                 kb varchar (16), \
                 UNIQUE(build,cve,kb) ON CONFLICT IGNORE\
-             )",                            # just making sure it's working,.. change to ignore
+             )",                          
             "create table refs(\
                 cve varchar(24),\
                 url varchar(200),\
                 UNIQUE(url,cve) ON CONFLICT IGNORE\
-             )"                             # just making sure it's working,.. change to ignore
+             )"                            
     ]
     with conn:
         for query in queries:
