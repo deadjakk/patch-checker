@@ -4,7 +4,7 @@ In short, PatchChecker is a web application (running on flask) that provides out
 Included in this project is also a web scraper that will automatically update the database for PatchChecker using information present on Microsoft sites, this allows for a more scalable and easier to use solution to the problem of finding CVEs to which a Windows system is (or is not) patched against. 
 Additionally, any other CVEs can be added to the data collector input and checked for as long as they have an entry on https://portal.msrc.microsoft.com.
 
-Further information about this project can be found [here](http://shell.rip/find_privesc_nobinary.html) or [here (github.io mirror)](https://deadjakk.github.io/).
+Further information about this project can be found [here](http://shell.rip/find_privesc_nobinary.html) or [here (github.io mirror)](https://deadjakk.github.io/find_privesc_nobinary.html).
 
 
 ## Using PatchChecker to check vulnerabilities:
