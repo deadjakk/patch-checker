@@ -1,8 +1,8 @@
 # PatchChecker
-This is the code base for the service that runs on the following site: https://patchchecker.com.
+This is the code base for the service running on: https://patchchecker.com.
 In short, PatchChecker is a web application (running on flask) that provides output similar to that of [Watson](https://github.com/rasta-mouse/Watson/). However by using PatchChecker, one is not required to execute a binary on the target machine.
 Included in this project is also a web scraper that will automatically update the database for PatchChecker using information present on Microsoft sites, this allows for a more scalable and easier to use solution to the problem of finding CVEs to which a Windows system is (or is not) patched against. 
-Additionally, any other CVEs can be added to the data collector input and checked for as long as they have an entry on https://portal.msrc.microsoft.com.
+Additionally, any other CVEs can be added to the data collector input and checked for as long as they have an entry on https://portal.msrc.microsoft.com. You can also use this to get the data to update Watson.
 
 Further information about this project can be found [here](http://shell.rip/find_privesc_nobinary.html) or [here (github.io mirror)](https://deadjakk.github.io/find_privesc_nobinary.html).
 
