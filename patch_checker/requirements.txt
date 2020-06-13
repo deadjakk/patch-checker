@@ -1,2 +1,4 @@
 loguru
 flask
+bs4
+pyppeteer
