@@ -72,7 +72,7 @@ class PrivChecker:
             kbs_res = None
             try:
                 kbs_res = db.sqlquery(kbs_query,self.db_file,logger)
-            except:
+            except Exception as e:
                 logger.error("Error while getting KBs for build: {}, cve: {}, err{}".format(build,cve,e))
                 return "Error performing query"
             if not kbs_res:
@@ -92,7 +92,7 @@ class PrivChecker:
         date = "Who knows?"
         try:
             date = db.lastupdate(self.db_file,logger)
-        except:
+        except Exception as e:
             logger.error("Error while getting date: err{}".format(e))
 
         # building output for vulnerable CVEs that were found
@@ -122,7 +122,7 @@ class PrivChecker:
                     url_res = None
                     try:
                         url_res = db.sqlquery(url_query,self.db_file,logger)
-                    except:
+                    except Exception as e:
                         logger.error("Error while getting urls for cve: {}, err{}".format(cve,e))
                         return "Error performing query"
                     for item in url_res:
@@ -162,7 +162,7 @@ class PrivChecker:
                 url_res = None
                 try:
                     url_res = db.sqlquery(url_query,self.db_file,logger)
-                except:
+                except Exception as e:
                     logger.error("Error while getting urls for cve: {}, err{}".format(cve,e))
                     return "Error performing query"
                 for item in url_res:
