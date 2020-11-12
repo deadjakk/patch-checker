@@ -20,29 +20,37 @@ BUILD_PATTERN = "14393|15063|16299|17134|17763|10586|10240|18362|18363"
 trashbin = []
 
 def parse_row(soup):
-    for item in soup.find_all('td',{"class":"ng-binding"}):
+    kbs = []
+    for item in soup.find_all('div',{"data-automation-key":"product"}):
         if "Windows" in item.text:
             data = item.text.strip()
             build = data
-    for item in soup.find_all('span',{"class":"articleTitle ng-binding ng-hide"}):
-        kb = item.text.strip()
-        return (build,kb)
+    for item in soup.find_all('div',{"data-automation-key":"kbArticles"}):
+        for item in soup.find_all('a',{"class":"ms-Link"}):
+            kb = item.text.strip()
+            try :
+                # test to see if all nums
+                int(kb)
+                kbs.append(kb)
+            except:
+                pass
+            
+        return (build,kbs)
 
 async def parsekb(page,cve):
     retarr = []
     logger.info("Parsing KBs for: {}".format(cve))
     await page.goto(MSRCBASE+cve)
 
-    sel = '#JelloWrapper > div.alley > div.securitydetails > div > ui-view > div:nth-child(3) > table:nth-child(10) > tbody:nth-child(3) > tr:nth-child(1) > td:nth-child(3) > a'
-    await page.waitForSelector(sel)
-    uniq = "ng-hide=\"!affectedProduct.articleUrl1\""
-    tableroot = '//*[@id="JelloWrapper"]/div[3]/div[2]/div/ui-view/div[2]/table[2]'
+    sel = '#securityUpdates > div:nth-child(1) > div:nth-child(2) > div:nth-child(1)'
+    await page.waitForSelector(sel,timeout=20000)
+    tableroot = '/html/body/div/div/div/div/div[2]/div/div[2]/div[3]/div/div[5]/div/div/div'
     elements = await page.xpath(tableroot)
     for element in elements:
         outerhtml = await element.getProperty('outerHTML')
         outerhtml = await outerhtml.jsonValue()
         soup = BeautifulSoup(outerhtml, 'html.parser')
-        for item in soup.find_all("tbody"):
+        for item in soup.find_all("div",{"class":"ms-List-cell"}):
             res = parse_row(item)
             logger.trace("Found: {}".format(res))
             retarr.append(res)
@@ -51,37 +59,38 @@ async def parsekb(page,cve):
 async def parsesupport(page,inp,cve):
     all_kbs = []
     retarr = []
-    kb = inp[1]
-    kb_f = "KB" + kb
-    await page.goto(SUPPORTBASE+kb)
-    sel = '#mainContent > div:nth-child(4) > article > div.ng-scope > div:nth-child(1) > div:nth-child(1) > div > div:nth-child(1) > div > header > h1'
-    await page.waitForSelector(sel)
-    versioninfo = await page.xpath('//*[@id="mainContent"]/div[3]/article/div[2]/div[1]/div[1]/div/div[2]/div[1]/div[1]/div/div[4]/span')
-    versionhtml = await versioninfo[0].getProperty('outerHTML')
-    version = await versionhtml.jsonValue()
-    soup = BeautifulSoup(version, 'html.parser')
-    versionre = re.findall(BUILD_PATTERN,soup.text)
-    if not versionre:
-        versionre = [inp[0]]
-    for version in versionre:
-        zeroed=False
-        elements = await page.xpath('//*[@id="mainContent"]/div[3]/article/div[2]/div[1]/div[1]/div/div[2]/aside/div[2]/div/div/ul')
-        for element in elements:
-            outerhtml = await element.getProperty('outerHTML')
-            outerhtml = await outerhtml.jsonValue()
-            soup = BeautifulSoup(outerhtml, 'html.parser')
-            for item in soup.find_all("li"):
-                parsedkb = (re.findall("KB[0-9]{7}",item.text))
-                if parsedkb:
-                    superseded = parsedkb[0].strip().upper()
-                    if not zeroed:
-                        all_kbs.append(superseded)
-                    if superseded == kb_f:
-                        zeroed = True
-                        logger.debug("KB_CONVER{}".format(parsedkb))
-                        logger.debug("Total KBs found for: {}, {}".format(
-                            cve,len(all_kbs)))
-                        retarr.append((cve,version,all_kbs))
+
+    for kb in inp[1]:
+        kb_f = "KB" + kb
+        await page.goto(SUPPORTBASE+kb)
+        sel = '#mainContent > div:nth-child(4) > article > div.ng-scope > div:nth-child(1) > div:nth-child(1) > div > div:nth-child(1) > div > header > h1'
+        await page.waitForSelector(sel)
+        versioninfo = await page.xpath('//*[@id="mainContent"]/div[3]/article/div[2]/div[1]/div[1]/div/div[2]/div[1]/div[1]/div/div[4]/span')
+        versionhtml = await versioninfo[0].getProperty('outerHTML')
+        version = await versionhtml.jsonValue()
+        soup = BeautifulSoup(version, 'html.parser')
+        versionre = re.findall(BUILD_PATTERN,soup.text)
+        if not versionre:
+            versionre = [inp[0]]
+        for version in versionre:
+            zeroed=False
+            elements = await page.xpath('//*[@id="mainContent"]/div[3]/article/div[2]/div[1]/div[1]/div/div[2]/aside/div[2]/div/div/ul')
+            for element in elements:
+                outerhtml = await element.getProperty('outerHTML')
+                outerhtml = await outerhtml.jsonValue()
+                soup = BeautifulSoup(outerhtml, 'html.parser')
+                for item in soup.find_all("li"):
+                    parsedkb = (re.findall("KB[0-9]{7}",item.text))
+                    if parsedkb:
+                        superseded = parsedkb[0].strip().upper()
+                        if not zeroed:
+                            all_kbs.append(superseded)
+                        if superseded == kb_f:
+                            zeroed = True
+                            logger.debug("KB_CONVER{}".format(parsedkb))
+                            logger.debug("Total KBs found for: {}, {}".format(
+                                cve,len(all_kbs)))
+                            retarr.append((cve,version,all_kbs))
     return retarr
             
 async def parseall(CVE,preview=False):
@@ -97,15 +106,18 @@ async def parseall(CVE,preview=False):
     for kb in kbb:
         if not kb:
             return arr0
+        if len(kb[1]) ==0:
+            return arr0
         found = False
         while not found:
             try:
                 logger.trace("running parsesupport against: {} {}".format(kb,CVE))
-                res = await parsesupport(page,kb,CVE)
-                for r in res:
-                    if r not in arr0:
-                        arr0.append(r)
-                found = True
+                if len(kb[1]) != 0:
+                    res = await parsesupport(page,kb,CVE)
+                    for r in res:
+                        if r not in arr0:
+                            arr0.append(r)
+                    found = True
             except errors.TimeoutError:
                 logger.debug("Browser timed out, restarting")
                 browser = await getbrowser(browser)
