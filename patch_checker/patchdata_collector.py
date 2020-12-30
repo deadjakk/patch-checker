@@ -2,6 +2,7 @@
 import re
 import sys
 import json
+import requests as r
 import asyncio
 import argparse
 from pyppeteer import *
@@ -10,89 +11,106 @@ from pyppeteer import errors
 from bs4 import BeautifulSoup
 
 # Example URLs:
-#msrcbase    = "https://portal.msrc.microsoft.com/en-US/security-guidance/advisory/CVE-2019-0836
 #supportbase = https://support.microsoft.com/help/4493475
 
-MSRCBASE      = "https://portal.msrc.microsoft.com/en-US/security-guidance/advisory/"
-SUPPORTBASE   = "https://support.microsoft.com/help/"
-BUILD_PATTERN = "14393|15063|16299|17134|17763|10586|10240|18362|18363"
+# provides json output
+MSRCAPI       = "https://api.msrc.microsoft.com/sug/v2.0/en-US/affectedProduct?%24filter=cveNumber+eq+%27{}%27"
+# used in requests implementation
+SUPPORTBASE2 = "https://support.microsoft.com/en-us/help/{}"
+# regex pattern
+BUILD_PATTERN = "14393|15063|16299|17134|17763|10586|10240|18362|18363|190."
+OSBUILDPATTERN="OS Build [\d]+"
 
 trashbin = []
 
-def parse_row(soup):
-    kbs = []
-    for item in soup.find_all('div',{"data-automation-key":"product"}):
-        if "Windows" in item.text:
-            data = item.text.strip()
-            build = data
-    for item in soup.find_all('div',{"data-automation-key":"kbArticles"}):
-        for item in soup.find_all('a',{"class":"ms-Link"}):
-            kb = item.text.strip()
-            try :
-                # test to see if all nums
-                int(kb)
-                kbs.append(kb)
-            except:
-                pass
+def parsebuilds(item):
+    retarr =  []
+    builds = re.findall(OSBUILDPATTERN,item['releaseVersion'])
+    for build in builds:
+        build = build.strip().split(' ')[-1]
+        build = build.split('.')[0]
+        retarr.append(build)
+    return retarr
             
-        return (build,kbs)
-
+        
 async def parsekb(page,cve):
-    retarr = []
-    logger.info("Parsing KBs for: {}".format(cve))
-    await page.goto(MSRCBASE+cve)
-
-    sel = '#securityUpdates > div:nth-child(1) > div:nth-child(2) > div:nth-child(1)'
-    await page.waitForSelector(sel,timeout=20000)
-    tableroot = '/html/body/div/div/div/div/div[2]/div/div[2]/div[3]/div/div[5]/div/div/div'
-    elements = await page.xpath(tableroot)
-    for element in elements:
-        outerhtml = await element.getProperty('outerHTML')
-        outerhtml = await outerhtml.jsonValue()
-        soup = BeautifulSoup(outerhtml, 'html.parser')
-        for item in soup.find_all("div",{"class":"ms-List-cell"}):
-            res = parse_row(item)
-            logger.trace("Found: {}".format(res))
-            retarr.append(res)
+    retarr=[]
+    response = r.get(MSRCAPI.format(cve.upper()))
+    if response.status_code != 200:
+        logger.error('error retrieving info from API')
+        return False
+    data = response.json()
+    for item in data['value']:
+        if len(item['kbArticles']) == 0:
+            logger.info("KB has no kbartices:\n{}\n skipping".format(item))
+            continue
+        kb = item['kbArticles'][0]['articleName']
+        url = item['kbArticles'][0]['articleUrl']
+        if kb not in retarr:
+            logger.debug('retrieved: {} -> {}'.format(kb,url))
+            retarr.append(kb)
     return retarr
 
-async def parsesupport(page,inp,cve):
-    all_kbs = []
+def parsesupport(page,inp,cve):
     retarr = []
+    all_kbs = {}
 
-    for kb in inp[1]:
-        kb_f = "KB" + kb
-        await page.goto(SUPPORTBASE+kb)
-        sel = '#mainContent > div:nth-child(4) > article > div.ng-scope > div:nth-child(1) > div:nth-child(1) > div > div:nth-child(1) > div > header > h1'
-        await page.waitForSelector(sel)
-        versioninfo = await page.xpath('//*[@id="mainContent"]/div[3]/article/div[2]/div[1]/div[1]/div/div[2]/div[1]/div[1]/div/div[4]/span')
-        versionhtml = await versioninfo[0].getProperty('outerHTML')
-        version = await versionhtml.jsonValue()
-        soup = BeautifulSoup(version, 'html.parser')
-        versionre = re.findall(BUILD_PATTERN,soup.text)
-        if not versionre:
-            versionre = [inp[0]]
-        for version in versionre:
-            zeroed=False
-            elements = await page.xpath('//*[@id="mainContent"]/div[3]/article/div[2]/div[1]/div[1]/div/div[2]/aside/div[2]/div/div/ul')
-            for element in elements:
-                outerhtml = await element.getProperty('outerHTML')
-                outerhtml = await outerhtml.jsonValue()
-                soup = BeautifulSoup(outerhtml, 'html.parser')
-                for item in soup.find_all("li"):
-                    parsedkb = (re.findall("KB[0-9]{7}",item.text))
-                    if parsedkb:
-                        superseded = parsedkb[0].strip().upper()
-                        if not zeroed:
-                            all_kbs.append(superseded)
-                        if superseded == kb_f:
-                            zeroed = True
-                            logger.debug("KB_CONVER{}".format(parsedkb))
-                            logger.debug("Total KBs found for: {}, {}".format(
-                                cve,len(all_kbs)))
-                            retarr.append((cve,version,all_kbs))
+    for kb in inp:
+        go = False
+        content = ""
+        res = r.get(SUPPORTBASE2.format(kb),allow_redirects=True)
+        if res.status_code != 200:
+            logger.error('did not get 200 when parsing builds and superceded kbs')
+            return False
+
+        for line in res.text.splitlines():
+            line = line.strip()
+            if line == "\"minorVersions\": [":
+                content = ""
+                go = True
+            else:
+                content += line
+            if "]" == line and go:
+                break
+
+        jdata = '{"data":[%s }' % content
+
+        # parse the json ripped out of the html
+        try:
+            logger.trace('parsing: {}...'.format(jdata[:20]))
+            jdata = json.loads(jdata)
+            logger.trace('parse success')
+        except Exception as e:
+            logger.error('error parsing json: {}'.format(e))
+            logger.error(jdata)
+            continue
+
+        # add the superceding kbs to dict
+        for item in jdata['data']:
+            builds = []
+            try:
+                builds = parsebuilds(item)
+                # logger.trace("builds found: {}".format(builds))
+            except Exception as e:
+                logger.error('failed to regex os build:{}'.format(e))
+                continue
+
+            for build in builds:
+                all_kbs[build]=[]
+            if 'id' in item.keys():
+                tempkb = item['id']
+                for build in builds:
+                    if int(tempkb) >= int(kb):
+                        logger.debug("adding {} for {} and build:{}".format(tempkb,cve,build))
+                        all_kbs[build].append("KB"+tempkb)
+            try:
+                for k in all_kbs.keys():
+                    retarr.append((cve,k,all_kbs[k]))
+            except Exception as e:
+                print(e)
     return retarr
             
+# calls the other functions to collect the data from msrc
 async def parseall(CVE,preview=False):
     browser = await getbrowser()
     page = await browser.newPage()
@@ -103,34 +121,31 @@ async def parseall(CVE,preview=False):
         return arr0
     logger.debug("Total rows returned for {1}, {0}".format(len(kbb),CVE))
 
-    for kb in kbb:
-        if not kb:
-            return arr0
-        if len(kb[1]) ==0:
-            return arr0
-        found = False
-        while not found:
-            try:
-                logger.trace("running parsesupport against: {} {}".format(kb,CVE))
-                if len(kb[1]) != 0:
-                    res = await parsesupport(page,kb,CVE)
-                    for r in res:
-                        if r not in arr0:
-                            arr0.append(r)
-                    found = True
-            except errors.TimeoutError:
-                logger.debug("Browser timed out, restarting")
-                browser = await getbrowser(browser)
-                page = await browser.newPage()
-            except Exception as e:
-                logger.error("Received error while grabbing info.\nErr: {}".format(e))
-                logger.error("Re-initializing browser and trying again")
-                browser = await getbrowser(browser)
-                page = await browser.newPage()
+    # example kb item: "#######"
+    await asyncio.sleep(3.0) # This one is necessary
+    found = False
+    while not found:
+        try:
+            logger.trace("running parsesupport against: {}".format(CVE))
+            res = parsesupport(page,kbb,CVE)
+            for r in res:
+                if r not in arr0:
+                    arr0.append(r)
+            found = True
+        except errors.TimeoutError:
+            logger.debug("Browser timed out, restarting")
+            browser = await getbrowser(browser)
+            page = await browser.newPage()
+        except Exception as e:
+            logger.error("Received error while grabbing info.\nErr: {}".format(e))
+            logger.error("Re-initializing browser and trying again")
+            browser = await getbrowser(browser)
+            page = await browser.newPage()
 
     return arr0
 
 def parseall_to_dict(inptup,urls=""):
+    print(inptup)
     if not inptup:
         logger.error("Tuple empty")
         return
@@ -149,6 +164,7 @@ def parseall_to_dict(inptup,urls=""):
         temp['build'] = item[1]
         temp['kbs'] = item[2]
         temp['count'] = len(item[2])
+        logger.debug('appending: {}'.format(item))
         retdict['patch_info'].append(temp)
 
     return retdict
@@ -186,7 +202,7 @@ async def getbrowser(browser=None):
     browser=await launch(args=[
             # Startup flags
             '--no-sandbox',
-            '--user-agent="Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.2.4) Gecko/20100614 Ubuntu/10.04 (lucid) Firefox/3.6.4"'
+            '--user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36/8mqQhSuL-09"'
         ],headless=headless_opt)
     trashbin.append(browser)
     return browser
