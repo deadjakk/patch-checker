@@ -14,23 +14,25 @@ supported_builds = [
     "10240",
     "18362",
     "18363",
-    "Windows 7 for 32-bit Systems Service Pack 1",
-    "Windows 7 for x64-based Systems Service Pack 1",
-    "Windows 8.1 for 32-bit systems",
-    "Windows 8.1 for x64-based systems",
-    "Windows RT 8.1",
-    "Windows Server 2008 R2 for Itanium-Based Systems Service Pack 1",
-    "Windows Server 2008 R2 for x64-based Systems Service Pack 1",
-    "Windows Server 2008 R2 for x64-based Systems Service Pack 1 (Server Core installation)",
-    "Windows Server 2008 for 32-bit Systems Service Pack 2",
-    "Windows Server 2008 for 32-bit Systems Service Pack 2 (Server Core installation)",
-    "Windows Server 2008 for Itanium-Based Systems Service Pack 2",
-    "Windows Server 2008 for x64-based Systems Service Pack 2",
-    "Windows Server 2008 for x64-based Systems Service Pack 2 (Server Core installation)",
-    "Windows Server 2012",
-    "Windows Server 2012 (Server Core installation)",
-    "Windows Server 2012 R2",
-    "Windows Server 2012 R2 (Server Core installation)"
+    "19041",
+    "19042"
+#    "Windows 7 for 32-bit Systems Service Pack 1",
+#    "Windows 7 for x64-based Systems Service Pack 1",
+#    "Windows 8.1 for 32-bit systems",
+#    "Windows 8.1 for x64-based systems",
+#    "Windows RT 8.1",
+#    "Windows Server 2008 R2 for Itanium-Based Systems Service Pack 1",
+#    "Windows Server 2008 R2 for x64-based Systems Service Pack 1",
+#    "Windows Server 2008 R2 for x64-based Systems Service Pack 1 (Server Core installation)",
+#    "Windows Server 2008 for 32-bit Systems Service Pack 2",
+#    "Windows Server 2008 for 32-bit Systems Service Pack 2 (Server Core installation)",
+#    "Windows Server 2008 for Itanium-Based Systems Service Pack 2",
+#    "Windows Server 2008 for x64-based Systems Service Pack 2",
+#    "Windows Server 2008 for x64-based Systems Service Pack 2 (Server Core installation)",
+#    "Windows Server 2012",
+#    "Windows Server 2012 (Server Core installation)",
+#    "Windows Server 2012 R2",
+#    "Windows Server 2012 R2 (Server Core installation)"
 ]
 
 class NotFound(Exception):
@@ -46,6 +48,8 @@ class PrivChecker:
         print("KBs received: {}".format(data))
         print("Count: {}".format(len(data)))
 
+        if len(data) == 0:
+            return "You must supply KBs to check"
         for sbuild in supported_builds:
             if build_data == sbuild:
                 build = build_data
@@ -72,7 +76,7 @@ class PrivChecker:
             kbs_res = None
             try:
                 kbs_res = db.sqlquery(kbs_query,self.db_file,logger)
-            except Exception as e:
+            except:
                 logger.error("Error while getting KBs for build: {}, cve: {}, err{}".format(build,cve,e))
                 return "Error performing query"
             if not kbs_res:
@@ -92,7 +96,7 @@ class PrivChecker:
         date = "Who knows?"
         try:
             date = db.lastupdate(self.db_file,logger)
-        except Exception as e:
+        except:
             logger.error("Error while getting date: err{}".format(e))
 
         # building output for vulnerable CVEs that were found
@@ -122,7 +126,7 @@ class PrivChecker:
                     url_res = None
                     try:
                         url_res = db.sqlquery(url_query,self.db_file,logger)
-                    except Exception as e:
+                    except:
                         logger.error("Error while getting urls for cve: {}, err{}".format(cve,e))
                         return "Error performing query"
                     for item in url_res:
@@ -162,7 +166,7 @@ class PrivChecker:
                 url_res = None
                 try:
                     url_res = db.sqlquery(url_query,self.db_file,logger)
-                except Exception as e:
+                except:
                     logger.error("Error while getting urls for cve: {}, err{}".format(cve,e))
                     return "Error performing query"
                 for item in url_res:
