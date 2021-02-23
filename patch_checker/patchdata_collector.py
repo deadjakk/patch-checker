@@ -54,60 +54,100 @@ async def parsekb(page,cve):
 def parsesupport(page,inp,cve):
     retarr = []
     all_kbs = {}
+    content = []
 
     for kb in inp:
         go = False
-        content = ""
+        content = []
         res = r.get(SUPPORTBASE2.format(kb),allow_redirects=True)
         if res.status_code != 200:
             logger.error('did not get 200 when parsing builds and superceded kbs')
             return False
 
+
         for line in res.text.splitlines():
-            line = line.strip()
-            if line == "\"minorVersions\": [":
-                content = ""
-                go = True
-            else:
-                content += line
-            if "]" == line and go:
+            if "supLeftNavCategory supLeftNavActiveCategory" in line:
+                content=[]
+            if "supLeftNavLink" in line:
+                if "Build" in line:
+                    content.append(line.strip()) 
+            if "aria-current" in line: 
                 break
 
-        jdata = '{"data":[%s }' % content
-
-        # parse the json ripped out of the html
         try:
-            logger.trace('parsing: {}...'.format(jdata[:20]))
-            jdata = json.loads(jdata)
-            logger.trace('parse success')
+            for c in content:
+                if "Builds" in c:
+                    k = c.split("help/")[1].split("\"")[0]
+                    #OS Builds 18362.1256 and 18363.1256
+                    build1 = c.split("Builds ")[1].split(".")[0]
+                    build2 = c.split(" and ")[1].split(".")[0]
+                    builds=[build1,build2]
+                    for build in builds:
+                        if build not in all_kbs.keys():
+                            all_kbs[build] = []
+                        logger.debug("adding {}:{} for {}".format(k,build,cve))
+                        add = "KB{}".format(k)
+                        if add not in all_kbs[build]:
+                            all_kbs[build].append(add)
+                else:
+                    k = c.split("help/")[1].split("\"")[0]
+                    build = c.split("Build ")[1].split(".")[0]
+                    if build not in all_kbs.keys():
+                        all_kbs[build] = []
+                    logger.debug("adding {}:{} for {}".format(k,build,cve))
+                    add = "KB{}".format(k)
+                    if add not in all_kbs[build]:
+                        all_kbs[build].append(add)
         except Exception as e:
-            logger.error('error parsing json: {}'.format(e))
-            logger.error(jdata)
-            continue
+            print(c)
+            logger.error(str(e))
 
-        # add the superceding kbs to dict
-        for item in jdata['data']:
-            builds = []
-            try:
-                builds = parsebuilds(item)
-                # logger.trace("builds found: {}".format(builds))
-            except Exception as e:
-                logger.error('failed to regex os build:{}'.format(e))
-                continue
 
-            for build in builds:
-                all_kbs[build]=[]
-            if 'id' in item.keys():
-                tempkb = item['id']
-                for build in builds:
-                    if int(tempkb) >= int(kb):
-                        logger.debug("adding {} for {} and build:{}".format(tempkb,cve,build))
-                        all_kbs[build].append("KB"+tempkb)
-            try:
-                for k in all_kbs.keys():
-                    retarr.append((cve,k,all_kbs[k]))
-            except Exception as e:
-                print(e)
+      #   for line in res.text.splitlines():
+      #       line = line.strip()
+      #       if line == "\"minorVersions\": [":
+      #           content = ""
+      #           go = True
+      #       else:
+      #           content += line
+      #       if "]" == line and go:
+      #           break
+
+        # jdata = '{"data":[%s }' % content
+
+        # # parse the json ripped out of the html
+        # try:
+            # logger.trace('parsing: {}...'.format(jdata[:20]))
+            # jdata = json.loads(jdata)
+            # logger.trace('parse success')
+        # except Exception as e:
+            # logger.error('error parsing json: {}'.format(e))
+            # logger.error(jdata)
+            # continue
+
+        # # add the superceding kbs to dict
+        # for item in jdata['data']:
+            # builds = []
+            # try:
+                # builds = parsebuilds(item)
+                # # logger.trace("builds found: {}".format(builds))
+            # except Exception as e:
+                # logger.error('failed to regex os build:{}'.format(e))
+                # continue
+
+            # for build in builds:
+                # all_kbs[build]=[]
+            # if 'id' in item.keys():
+                # tempkb = item['id']
+                # for build in builds:
+                    # if int(tempkb) >= int(kb):
+                        # logger.debug("adding {} for {} and build:{}".format(tempkb,cve,build))
+                        # all_kbs[build].append("KB"+tempkb)
+    try:
+        for k in all_kbs.keys():
+            retarr.append((cve,k,all_kbs[k]))
+    except Exception as e:
+        logger.error(str(e))
     return retarr
             
 # calls the other functions to collect the data from msrc
