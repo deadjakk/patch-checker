@@ -99,50 +99,7 @@ def parsesupport(page,inp,cve):
                     if add not in all_kbs[build]:
                         all_kbs[build].append(add)
         except Exception as e:
-            print(c)
             logger.error(str(e))
-
-
-      #   for line in res.text.splitlines():
-      #       line = line.strip()
-      #       if line == "\"minorVersions\": [":
-      #           content = ""
-      #           go = True
-      #       else:
-      #           content += line
-      #       if "]" == line and go:
-      #           break
-
-        # jdata = '{"data":[%s }' % content
-
-        # # parse the json ripped out of the html
-        # try:
-            # logger.trace('parsing: {}...'.format(jdata[:20]))
-            # jdata = json.loads(jdata)
-            # logger.trace('parse success')
-        # except Exception as e:
-            # logger.error('error parsing json: {}'.format(e))
-            # logger.error(jdata)
-            # continue
-
-        # # add the superceding kbs to dict
-        # for item in jdata['data']:
-            # builds = []
-            # try:
-                # builds = parsebuilds(item)
-                # # logger.trace("builds found: {}".format(builds))
-            # except Exception as e:
-                # logger.error('failed to regex os build:{}'.format(e))
-                # continue
-
-            # for build in builds:
-                # all_kbs[build]=[]
-            # if 'id' in item.keys():
-                # tempkb = item['id']
-                # for build in builds:
-                    # if int(tempkb) >= int(kb):
-                        # logger.debug("adding {} for {} and build:{}".format(tempkb,cve,build))
-                        # all_kbs[build].append("KB"+tempkb)
     try:
         for k in all_kbs.keys():
             retarr.append((cve,k,all_kbs[k]))
