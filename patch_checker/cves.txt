@@ -12,3 +12,4 @@ CVE-2020-16877|https://labs.ioactive.com/2020/11/cve-2020-16877-exploiting-micro
 CVE-2020-0668|https://itm4n.github.io/cve-2020-0668-windows-service-tracing-eop/
 CVE-2020-0787|https://itm4n.github.io/cve-2020-0787-windows-bits-eop/
 CVE-2020-0863|https://itm4n.github.io/cve-2020-0863-windows-diagtrack-info-disclo/
+CVE-2022-37957|https://msrc.microsoft.com/update-guide/vulnerability/CVE-2022-37957
