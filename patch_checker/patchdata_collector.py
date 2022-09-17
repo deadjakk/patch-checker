@@ -18,7 +18,7 @@ MSRCAPI       = "https://api.msrc.microsoft.com/sug/v2.0/en-US/affectedProduct?%
 # used in requests implementation
 SUPPORTBASE2 = "https://support.microsoft.com/en-us/help/{}"
 # regex pattern
-BUILD_PATTERN = "14393|15063|16299|17134|17763|10586|10240|18362|18363|190."
+BUILD_PATTERN = "\d{5}|190\d"
 OSBUILDPATTERN="OS Build [\d]+"
 
 trashbin = []

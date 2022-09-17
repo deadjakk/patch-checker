@@ -5,34 +5,22 @@ import json
 from loguru import logger
 
 supported_builds = [
+    "10240",
     "14393",
     "15063",
+    "15254",
     "16299",
     "17134",
     "17763",
-    "10586",
-    "10240",
     "18362",
     "18363",
     "19041",
-    "19042"
-#    "Windows 7 for 32-bit Systems Service Pack 1",
-#    "Windows 7 for x64-based Systems Service Pack 1",
-#    "Windows 8.1 for 32-bit systems",
-#    "Windows 8.1 for x64-based systems",
-#    "Windows RT 8.1",
-#    "Windows Server 2008 R2 for Itanium-Based Systems Service Pack 1",
-#    "Windows Server 2008 R2 for x64-based Systems Service Pack 1",
-#    "Windows Server 2008 R2 for x64-based Systems Service Pack 1 (Server Core installation)",
-#    "Windows Server 2008 for 32-bit Systems Service Pack 2",
-#    "Windows Server 2008 for 32-bit Systems Service Pack 2 (Server Core installation)",
-#    "Windows Server 2008 for Itanium-Based Systems Service Pack 2",
-#    "Windows Server 2008 for x64-based Systems Service Pack 2",
-#    "Windows Server 2008 for x64-based Systems Service Pack 2 (Server Core installation)",
-#    "Windows Server 2012",
-#    "Windows Server 2012 (Server Core installation)",
-#    "Windows Server 2012 R2",
-#    "Windows Server 2012 R2 (Server Core installation)"
+    "19042",
+    "19043",
+    "19044",
+    "OS 17763",
+    "20348",
+    "22000",
 ]
 
 class NotFound(Exception):
@@ -49,26 +37,27 @@ class PrivChecker:
         print("Count: {}".format(len(data)))
 
         if len(data) == 0:
+            logger.error("no KBs supplied")
             return "You must supply KBs to check"
-        for sbuild in supported_builds:
-            if build_data == sbuild:
-                build = build_data
+        build = build_data if build_data in supported_builds else None
         # wasn't found in array
         if not build:
+            logger.error("invalid build supplied", repr(build_data), supported_builds)
             return "Incorrect Build."
         print("Build: {}".format(build))
         print("-"*25)
 
         vuln_found = []
-        cve_query = " DISTINCT cve from vulns where build = '{}'".format(str(build))
         cq_res = None
+        cve_query = f" DISTINCT cve from vulns where build = \"{build}\""
         try:
             cq_res = db.sqlquery(cve_query,self.db_file,logger)
         except Exception as e:
             logger.error("Error while getting CVEs for build: {}".format(e))
-            return "An error occured 1"
+            return "An error occured"
         if not cq_res:
-            return "Incorrect Build"
+            logger.error(f"no cves found for {build}")
+            return "No CVEs for provided build"
         logger.debug("Query result:{}".format(cq_res))
         for cve in cq_res:
             cve = cve[0]
@@ -77,7 +66,7 @@ class PrivChecker:
             try:
                 kbs_res = db.sqlquery(kbs_query,self.db_file,logger)
             except:
-                logger.error("Error while getting KBs for build: {}, cve: {}, err{}".format(build,cve,e))
+                logger.error(f"Error while getting KBs for build: {build}")
                 return "Error performing query"
             if not kbs_res:
                 return "An error occured 2"
@@ -175,7 +164,3 @@ class PrivChecker:
                 output += "<span class='nv'>Not Vulnerable</span>\n\n"
 
         return output
-
-
-
-

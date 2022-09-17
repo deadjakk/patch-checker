@@ -28,8 +28,7 @@ def check_privs():
 
 print("Starting")
 @app.route("/", methods=["GET"])
-
 def root():
-    return "", 204
+    return render_template('index.html'), 200
 if __name__ == '__main__':
     app.run(host='0.0.0.0')

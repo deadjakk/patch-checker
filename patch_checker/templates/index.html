@@ -1,0 +1,36 @@
+<html>
+<title>Patch Checker</title>
+<form action="http://localhost:5000/checkprivs/" method="post" accept-charset="utf-8">
+<label class="font-weight-bold" for="hashes">Enter a list of installed KBs and select your build number to see if the system is patched against known public privelege escalation exploits</label>
+			<p><i>Submitted data will be regex'd against: "KB[0-9]{7}" all other data is immediately discarded, no submission history is maintained, code is in footer of this page</i></p>
+<textarea cols="120" rows="20" name="wmicinfo" id="wmicinfo" class="form-control pl-3" placeholder="Paste list of installed KBs within this text field&#10;This form will automagically parse the data using the following regex pattern: 'KB[0-9]{7}', so data doesn't need to be necessarily 'clean'&#10;
+A couple suggestions for obtaining this information (without admin rights):
+(from cmd.exe)    wmic qfe list full | findstr /i hotfix 
+(from powershell) get-hotfix | select hotfixid
+
+Select your Windows build below, one way this data can be obtained is by running the following:
+systeminfo | findstr /i build
+" rows="10"></textarea>
+<br>
+<select name="build_num" id="build_num" class= "subm fa">
+				<option value="0">---Select your Build---</option>
+                <option value="10240">10240</option>
+                <option value="14393">14393</option>
+                <option value="15063">15063</option>
+                <option value="15254">15254</option>
+                <option value="16299">16299</option>
+                <option value="17134">17134</option>
+                <option value="17763">17763</option>
+                <option value="18362">18362</option>
+                <option value="18363">18363</option>
+                <option value="19041">19041</option>
+                <option value="19042">19042</option>
+                <option value="19043">19043</option>
+                <option value="19044">19044</option>
+                <option value="20348">20348</option>
+                <option value="22000">22000</option>
+                <option value="OS 17763">OS 17763</option>
+</select>
+<button type="submit" class="px-4 btn subm btn-primary fa">Check patches</button>
+</form>
+</html>
