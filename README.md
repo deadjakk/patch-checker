@@ -4,13 +4,12 @@ In short, PatchChecker is a web application (running on flask) that provides out
 Included in this project is also a web scraper that will automatically update the database for PatchChecker using information present on Microsoft sites, this allows for a more scalable and easier to use solution to the problem of finding CVEs to which a Windows system is (or is not) patched against. 
 Additionally, any other CVEs can be added to the data collector input and checked for as long as they have an entry on https://portal.msrc.microsoft.com. You can also use this to get the data to update Watson.
 
-Further information about this project can be found [here](http://shell.rip/find_privesc_nobinary.html) or [here (github.io mirror)](https://deadjakk.github.io/find_privesc_nobinary.html).
+Further information about this project can be found [here](http://shell.rip/find_privesc_nobinary.html).
 
 
 ## Using PatchChecker to check vulnerabilities:
 To use the patchchecker, you can either go to the publicly hosted website [here at patchchecker.com](https://patchchecker.com) or you can git clone this repo, install the required libraries, makes sure patches.db is in the same directory as app.py and then start the application with `python3 ./app.py`. 
 Once the application is started you can open the included "index.html" file in a browser to actually use the service and get the list of patches to which the system being tested is vulnerable.   
-Additional information can be found [here](https://deadjakk.github.io/find_privesc_nobinary.html).
 
 ### Getting KB data:
 ![getting-info](images/getting_info.png)
